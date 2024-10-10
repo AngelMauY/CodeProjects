@@ -1,0 +1,371 @@
+  Calculadora básica*/ 
+
+ 
+
+const byte filas = 4; 
+
+const byte columnas = 4; 
+
+byte pinesFilas[] = {13,12,11,10}; 
+
+byte pinesColumnas[] = {9,8,7,6}; 
+
+char teclas[4][4]   =    {{'1','2','3','A'}, 
+
+{'4','5','6','+'}, 
+
+{'7','8','9','-'}, 
+
+{'*','0','=','/'}}; 
+
+Int display7c[10]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x67}; 
+
+byte a=A0; 
+
+byte b=A1; 
+
+byte c=A2; 
+
+byte d=A3; 
+
+byte e=A4; 
+
+byte f=A5; 
+
+byte g=5; 
+
+//Declaración pines de Tbjs 
+
+byte t1=1; //xxxx 
+
+byte t2=2; //xxx 
+
+byte t3=3; //xx 
+
+byte t4=4; //x 
+
+int tempor[4]; 
+
+int contret = 0; 
+
+int cont=2; 
+
+char opr; 
+
+int resultado,aux; 
+
+void puerto(int bits){ 
+
+digitalWrite(a,bitRead(bits,0)); 
+
+digitalWrite(b,bitRead(bits,1)); 
+
+digitalWrite(c,bitRead(bits,2)); 
+
+digitalWrite(d,bitRead(bits,3)); 
+
+digitalWrite(e,bitRead(bits,4)); 
+
+digitalWrite(f,bitRead(bits,5)); 
+
+digitalWrite(g,bitRead(bits,6)); 
+
+} 
+
+//funciones 
+
+void mostrar() //Se muestra el número en el display 
+
+{ 
+
+for(int i=t1;i<=t4;i++){ 
+
+puerto(display7c[tempor[i-t1]]); 
+
+digitalWrite(i,HIGH);  
+
+delay(1); 
+
+digitalWrite(i,LOW);  
+
+} 
+
+} 
+
+void separar(){ //Separado de unidades 
+
+//Dígito Millar 
+
+tempor[0]=resultado/1000; 
+
+//Dígito Centena 
+
+tempor[1]=(resultado-tempor[0]*1000)/100; 
+
+//Dígito Decena 
+
+tempor[2]=(resultado-tempor[0]*1000-tempor[1]*100)/10; 
+
+//Dígito Unidad 
+
+tempor[3]=(resultado-tempor[0]*1000-tempor[1]*100-tempor[2]*10); 
+
+} 
+
+void barrer(){ //Hace barrido de filas y columnas 
+
+for (int nL = 0; nL <= 3; nL++){ 
+
+digitalWrite(pinesFilas[nL], LOW);  
+
+for (int nC = 0; nC <= 3; nC++){ 
+
+ 			if(digitalRead(pinesColumnas[nC]) == LOW){ 
+
+funcionBoton(nC,nL); 
+
+while(digitalRead(pinesColumnas[nC])== LOW){} 
+
+ 			} 
+
+} 
+
+digitalWrite(pinesFilas[nL], HIGH); 
+
+} 
+
+delay(10); 
+
+} 
+
+void funcionBoton(int nC, int nL){ //Leer el valor presionado 
+
+switch(teclas[nL][nC]) 
+
+{ 
+
+//* 
+
+  case 'A': 
+
+//Borra todo a cero 
+
+tempor[0]=0; 
+
+tempor[1]=0; 
+
+tempor[2]=0; 
+
+tempor[3]=0; 
+
+//reinicia el contador 
+
+cont=2; 
+
+break; 
+
+  case '=': 
+
+//Muestra el resultado 
+
+if(cont==1){ 
+
+operacion(); 
+
+cont=2; 
+
+} 
+
+break; 
+
+default: 
+
+switch(cont){ 
+
+case 3: 
+
+//guarda en el menos significativo 
+
+tempor[cont]=String(teclas[nL][nC]).toInt(); 
+
+cont=0; 
+
+    break; 
+
+case 2: 
+
+        //Guarda en los displays de la derecha 
+
+tempor[cont]=String(teclas[nL][nC]).toInt(); 
+
+cont++; 
+
+break; 
+
+case 1: 
+
+//Guarda en el menos significativo 
+
+tempor[cont]=String(teclas[nL][nC]).toInt(); 
+
+break; 
+
+//Si se ingresa 4 numeros o mas 
+
+case 0: 
+
+        //Guarda el operador + - * 
+
+        if(aux==0){ 
+
+  opr = teclas[nL][nC]; 
+
+  aux=1; 
+
+} 
+
+//verificación de que el operador sea el correcto 
+
+else{ 
+
+  if(opr=='+' || opr=='-' || opr=='*' || opr=='/'){ 
+
+tempor[cont]=String(teclas[nL][nC]).toInt(); 
+
+cont++; 
+
+  } 
+
+  aux=0; 
+
+} 
+
+break; 
+
+} 
+
+break; 
+
+} 
+
+} 
+
+void operacion(){ //Operaciones  
+
+int num1; 
+
+int num2; 
+
+num1=(tempor[2]*10)+tempor[3]; 
+
+num2=(tempor[0]*10)+tempor[1]; 
+
+switch(opr) 
+
+{ 
+
+  //Suma 
+
+  case '+': 
+
+    resultado = num1+num2; 
+
+  break; 
+
+  //Resta 
+
+  case '-':  
+
+    if(num2>num1){ 
+
+      resultado = num2-num1; 
+
+    } 
+
+    else{ 
+
+      resultado = num1-num2; 
+
+    } 
+
+    break; 
+
+  //multiplicacion 
+
+  case '*': 
+
+    resultado = num1*num2; 
+
+    break; 
+
+  //Division 
+
+  case '/': 
+
+    if(num2==0){ 
+
+      resultado=0; 
+
+    } 
+
+    else{ 
+
+      resultado = num1/num2; 
+
+    } 
+
+    break; 
+
+  } 
+
+separar(); 
+
+} 
+
+ 
+
+ 
+
+void setup() { 
+
+  pinMode(a,OUTPUT); 
+
+  pinMode(b,OUTPUT); 
+
+  pinMode(c,OUTPUT); 
+
+  pinMode(d,OUTPUT); 
+
+  pinMode(e,OUTPUT); 
+
+  pinMode(f,OUTPUT); 
+
+  for(int i=t1;i<=g;i++){ 
+
+    pinMode(i,OUTPUT); 
+
+  } 
+
+  for (int nL = 0; nL <= 3; nL++) { 
+
+    pinMode(pinesFilas[nL], OUTPUT); 
+
+    digitalWrite(pinesFilas[nL], HIGH); 
+
+  } 
+
+  for (int nC = 0; nC <= 3; nC++) { 
+
+    pinMode(pinesColumnas[nC], INPUT_PULLUP); 
+
+  } 
+
+} 
+
+void loop() { 
+
+mostrar(); 
+
+barrer(); 
+
+} 
